@@ -2,6 +2,8 @@ import tkinter as tk
 import threading
 import time
 import bluetooth
+import socket
+import sys
 
 def windowBoot():
     global window
@@ -11,22 +13,34 @@ def windowBoot():
     screen_height = window.winfo_screenheight()
     window.geometry(f"{screen_width}x{screen_height}")
 
-    global bluetoothLabel
-    bluetoothLabel = tk.Label(window, font=("Arial", 30), text="Awaiting bluetooth connection...")
-    bluetoothLabel.place(relx=0.5, rely=0.5, anchor="center")
+    global awaitingBluetoothLabel
+    awaitingBluetoothLabel = tk.Label(window, font=("Arial", 25), text="Awaiting bluetooth connection...")
+    awaitingBluetoothLabel.place(relx=0.5, rely=0.5, anchor="center")
 
+    window.protocol("WM_DELETE_WINDOW", exitProcedure)
     window.mainloop()
 
-def listenForBluetooth():
-    #Simulate listening for bluetooth connection here
-    time.sleep(2)
-    bluetoothLabel.destroy()
-    window.after(0, startBluetoothControls)
+def exitProcedure():
+    window.quit()
+    sys.exit()
+
+def tryConnectingToPiWithBluetooth():
+    #Replace target_mac_address with the raspberry pi's mac address
+    targetMacAddress = "04:CF:4B:BB:D8:10"
+    nearbyDevices = bluetooth.discover_devices()
+
+    if targetMacAddress in nearbyDevices:
+        awaitingBluetoothLabel.config(text="Bluetooth connection established")
+        window.update()
+        window.after(4000, startBluetoothControls)
+    else:
+        awaitingBluetoothLabel.config(text="Could not find device")
+        window.update()
+        window.after(4000, exitProcedure)
 
 def setUpControlPanel():
     control_panel = tk.Frame(window)
     control_panel.place(relx=0.5, rely=0.5, anchor="center")
-    
     up_arrow_button = tk.Button(control_panel, text="↑", font=("Arial", 50), command=moveUp)
     up_arrow_button.grid(row=0, column=1)
     left_arrow_button = tk.Button(control_panel, text="←", font=("Arial", 50), command=moveLeft)
@@ -35,45 +49,31 @@ def setUpControlPanel():
     right_arrow_button.grid(row=1, column=2)
     down_arrow_button = tk.Button(control_panel, text="↓", font=("Arial", 50), command=moveDown)
     down_arrow_button.grid(row=2, column=1)
-
     stop_button = tk.Button(control_panel, text="STOP", font=("Arial", 30), command=stopRobot)
     stop_button.grid(row=1, column=1)
 
-
-
 def startBluetoothControls():
-    # Create arrow icons for controlling robot movement
+    awaitingBluetoothLabel.destroy()
     setUpControlPanel()
     
-
 def moveUp():
-    #Send movement
     print("Move Up")
 
 def moveLeft():
-    #Send movement
     print("Move Left")
 
 def moveRight():
-    #Send movement
     print("Move Right")
 
 def moveDown():
-    #Send movement
     print("Move Down")
 
 def stopRobot():
-    #Send movement
     print("Robot stopped")
 
-
-
 def startWindowAndBluetooth():
-    # Start the Tkinter window in a separate thread
     threading.Thread(target=windowBoot).start()
-    
-    # Start listening for Bluetooth connections in the main thread
-    listenForBluetooth()
+    tryConnectingToPiWithBluetooth()
 
 if __name__ == '__main__': 
     startWindowAndBluetooth()
