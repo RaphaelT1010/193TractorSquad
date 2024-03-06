@@ -1,0 +1,7 @@
+In order to allow d-feet to see all tasks, need to change permissions
+in /etc/dbus-1/, create a file called system-local.conf
+place the contents of system-local.conf into it
+
+this essentially gives the policy user of "pi" full permission to see dbus
+
+to restart d-bus daemon: sudo systemctl restart dbus
