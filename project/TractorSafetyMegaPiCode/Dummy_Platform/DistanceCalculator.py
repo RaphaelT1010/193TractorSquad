@@ -48,13 +48,14 @@ def heading(lat1, lon1, lat2, lon2):
     return initial_heading
 
 # Example coordinates for points A and B
-point_A = (38.558268, -121.698892)  # San Francisco, CA
-point_B = (38.558290, -121.698917)  # Los Angeles, CA
+point_A = (38.53660000000001, -121.75483166666666)  # San Francisco, CA
+point_B = (38.53665716666664, -121.75480433333334)
+point_C = (38.53661366666667, -121.75456366666666) # Los Angeles, CA
 
 # Calculate distance
 distance = haversine(point_A[0], point_A[1], point_B[0], point_B[1])
 print(f"Distance between A and B: {distance:.6f} m")
 
 # Calculate heading
-heading_angle = heading(point_A[0], point_A[1], point_B[0], point_B[1])
+heading_angle = heading(point_A[0], point_A[1], point_C[0], point_C[1])
 print(f"Heading from A to B: {heading_angle:.2f} degrees")

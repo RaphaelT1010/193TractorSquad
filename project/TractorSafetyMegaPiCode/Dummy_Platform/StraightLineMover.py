@@ -22,7 +22,7 @@ def moveStraight(initialPosition, finalPosition, bot):
 def moveStraight(initialPosition, bot):
 
 	# Calculate distance
-	distance = 50 #cm
+	distance = 400 #cm
 	ratio = (1 / 14) #1 second per 14 cm
 	completionTime = int(distance * ratio)
 	print(f"StraightLineMover says distance is {distance}")

@@ -8,11 +8,13 @@ from multiprocessing import Process,Manager,Array
 import threading
 
 class mSerial():
+    usb0 ='/dev/ttyUSB0'
+    usb1 ='/dev/ttyUSB1'
     ser = None
     def __init__(self):
         print(self)
 
-    def start(self, port='/dev/ttyUSB0'):
+    def start(self, port=usb0):
         self.ser = serial.Serial(port,115200,timeout=10)
 
     def device(self):
@@ -65,6 +67,8 @@ A10 = 23
 A11 = 24
 
 class MegaPi():
+    usb0 ='/dev/ttyUSB0'
+    usb1 ='/dev/ttyUSB1'
     def __init__(self):
         print("init MegaPi")
         signal.signal(signal.SIGINT, self.exit)
@@ -79,7 +83,7 @@ class MegaPi():
     def __del__(self):
         self.exiting = True
 
-    def start(self,port='/dev/ttyUSB0'):
+    def start(self,port=usb0):
         print("I am here")
         self.device = mSerial()
         self.device.start(port)

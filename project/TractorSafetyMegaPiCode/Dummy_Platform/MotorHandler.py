@@ -5,6 +5,9 @@ import keyboard
 from pynput import keyboard
 from functools import partial
 
+speed = 100
+slowSpeed = 50
+
 ## Start of Robot Controller functions
 def printTheControlsPanel():
 	print("Welcome to the Robot Controls!")
@@ -28,17 +31,17 @@ def printTheControlsPanel():
 	print("5: Have Robot Start to Point A to B")
 	print("----------------------------------------")
 def driveBotForward(bot):
-	bot.motorRun(1,50)
-	bot.motorRun(2,-50)
-	bot.motorRun(Controller.M1,50)
-	bot.motorRun(Controller.M2,-50)
+	bot.motorRun(1,100)
+	bot.motorRun(2,-100)
+	bot.motorRun(Controller.M1,100)
+	bot.motorRun(Controller.M2,-100)
 
 
 def driveBotInReverse(bot):
 	bot.motorRun(1,-50)
 	bot.motorRun(2,50)
-	bot.motorRun(Controller.M1,-50)
-	bot.motorRun(Controller.M2,50)
+	bot.motorRun(Controller.M1,-100)
+	bot.motorRun(Controller.M2,100)
 
 def pivotBotRight(bot):
 	bot.motorRun(1,-50)
@@ -49,12 +52,12 @@ def pivotBotLeft(bot):
 	bot.motorRun(Controller.M1,50)
 
 def turnBotLeft(bot):
-	bot.motorRun(1,50)
-	bot.motorRun(Controller.M1,50)
+	bot.motorRun(1,100)
+	bot.motorRun(Controller.M1,100)
 
 def turnBotRight(bot):
-	bot.motorRun(Controller.M2,-50)
-	bot.motorRun(2,-50)
+	bot.motorRun(Controller.M2,-100)
+	bot.motorRun(2,-100)
 
 
 def stopBot(bot):
@@ -65,27 +68,27 @@ def stopBot(bot):
 
 def turn180Bot(bot):
 	pivotBotRight(bot)
-	sleep(4.2)
+	sleep(5.6)
 
 def turn360Bot(bot):
 	pivotBotRight(bot)
-	sleep(8.4)
+	sleep(11.2)
 
 def turn90Bot(bot):
 	pivotBotRight(bot)
-	sleep(2.1)	
+	sleep(2.8)	
 
 def pivotCCW(heading, bot):
 	print(f"Turning counter clockwise by {heading} degrees")
-	pivot_time = heading / 42.857
-	print(pivot_time)
+	pivot_time = heading / 32.1428571
+	#print(pivot_time)
 	pivotBotLeft(bot)
 	sleep(pivot_time)
 
 def pivotCW(heading, bot):
 	print(f"Turning clockwise by {heading} degrees")
-	pivot_time = heading / 42.857
-	print(pivot_time)
+	pivot_time = heading / 32.1428571
+	#print(pivot_time)
 	pivotBotRight(bot)
 	sleep(pivot_time)
 

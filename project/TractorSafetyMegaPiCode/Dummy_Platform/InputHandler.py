@@ -46,11 +46,10 @@ def on_press(key,bot):
 			print("testing 5")
 			
 			current_heading, last_pos = Behavior.startUpProcedure(bot)
-			print(f"Current heading {current_heading}")
-			heading = DistanceCalculator.heading(last_pos[0], last_pos[1], 38.536383, -121.753960)
+			dest_heading = DistanceCalculator.heading(last_pos[0], last_pos[1], 38.536598333333345, -121.75459833333335)
 			sleep(1)
 			
-			heading.testheading(heading, current_heading, bot = bot)
+			heading.faceCorrectHeading(dest_heading, current_heading, bot = bot)
 
 		print('alphanumeric key{0} pressed'.format(key.char))
 	except AttributeError:

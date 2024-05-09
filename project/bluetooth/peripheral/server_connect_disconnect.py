@@ -13,6 +13,7 @@ sys.path.insert(0, '.')
 bus = None
 adapter_path = None
 adv_mgr_interface = None
+connected = 0
 
 class Advertisement(dbus.service.Object):
     PATH_BASE = '/org/bluez/ldsg/advertisement'
@@ -25,7 +26,7 @@ class Advertisement(dbus.service.Object):
         self.manufacturer_data = None
         self.solicit_uuids = None
         self.service_data = None
-        self.local_name = 'Hello'
+        self.local_name = 'tractorsquad'
         self.include_tx_power = False
         self.data = None
         self.discoverable = True
@@ -74,6 +75,34 @@ def register_ad_error_cb(error):
     print("Error: Failed to register advertisement: " + str(error))
     mainloop.quit()
 
+def set_connected_status(status):
+    global connected
+    if (status == 1):
+        print("connected")
+        connected = 1
+        stop_advertising()
+    else:
+        print("disconnected")
+        connected = 0
+        start_advertising()
+
+def properties_changed(interface, changed, invalidated, path):
+    if (interface == bluetooth_constants.DEVICE_INTERFACE):
+        if ("Connected" in changed):
+            set_connected_status(changed["Connected"])
+
+def interfaces_added(path, interface):
+    if bluetooth_constants.DEVICE_INTERFACE in interfaces:
+        properties = interfaces[bluetooth_constants.DEVICE_INTERFACE]
+        if ("Connected" in properties):
+            set_connected_status(properties["Connected"])
+
+def stop_advertising():
+    global adv
+    global adv_mgr_interface
+    print("Unregistering advertisement", adv.get_path())
+    adv_mgr_interface.UnregisterAdvertisement(adv.get_path())
+
 def start_advertising():
     global adv
     global adv_mgr_interface
@@ -86,6 +115,10 @@ bus = dbus.SystemBus()
 
 adapter_path = bluetooth_constants.BLUEZ_NAMESPACE + bluetooth_constants.ADAPTER_NAME
 print(adapter_path)
+
+bus.add_signal_receiver(properties_changed, dbus_interface = bluetooth_constants.DBUS_PROPERTIES, signal_name = "PropertiesChanged", path_keyword = "path")
+
+bus.add_signal_receiver(interfaces_added, dbus_interface = bluetooth_constants.DBUS_OM_IFACE, signal_name = "InterfacesAdded")
 
 adv_mgr_interface = dbus.Interface(bus.get_object(bluetooth_constants.BLUEZ_SERVICE_NAME, adapter_path), bluetooth_constants.ADVERTISING_MANAGER_INTERFACE)
 
