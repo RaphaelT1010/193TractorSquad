@@ -3,6 +3,7 @@ import sys
 import board
 import adafruit_lsm9ds1
 import imufusion
+import time
 
 
 
@@ -10,33 +11,25 @@ import imufusion
 i2c = board.I2C()  # uses board.SCL and board.SDA
 # i2c = board.STEMMA_I2C()  # For using the built-in STEMMA QT connector on a microcontroller
 sensor = adafruit_lsm9ds1.LSM9DS1_I2C(i2c)
-time_interval = 0.01
-sample_rate = int(1 / time_interval)
 
-ahrs = imufusion.Ahrs()
-ahrs.settings = imufusion.Settings(10,  # gain
-                                    10,  # acceleration rejection
-                                    20,  # magnetic rejection
-                                    5 * sample_rate)  # rejection timeout
+
+
+mag_hard_iron_correction_values = (0.2023, -0.18634, 0.08519)
+gyro_bias_correction_values = (0.1629483022893206, 0.03863722631602448, 0.002977968036215325)
 
 def update_heading_data():
-    gyroscope = np.array(lsm9ds1.gyro)
-    accelerometer = np.array(lsm9ds1.acceleration)
-    magnetometer = np.array(lsm9ds1.magnetic)
+    time.sleep(2)
+    gyro_raw = sensor.gyro
+    accel_raw = sensor.acceleration
+    mag_raw = sensor.magnetic
 
-    # Update AHRS with gyroscope, accelerometer, and magnetometer data
-    ahrs.update(gyroscope, accelerometer, magnetometer, time_interval)
+    gyroscope = np.array(list(gyro_raw))[:3]
+    accelerometer = np.array(list(accel_raw))[:3]
+    magnetometer = np.array(list(mag_raw))[:3]
+    
+    
+    gyro_corrected = gyroscope - gyro_bias_correction_values
+    # Apply magnetometer hard iron correction
+    mag_corrected = magnetometer - mag_hard_iron_correction_values
 
-    # Get heading angle from AHRS output
-    heading = get_heading_from_ahrs_output(ahrs)
-    print(f'Heading: {heading}')
-
-def get_heading_from_ahrs_output(ahrs):
-    # Extract heading angle from AHRS output
-    # This can be obtained directly from AHRS output or by converting quaternion to Euler angles
-    # You may need to adjust this based on the AHRS implementation
-    heading = np.degrees(ahrs.quaternion.to_euler()[2])  # Assuming yaw angle represents heading
-    return heading
-
-while True:
-    update_heading_data()
+    
