@@ -30,8 +30,6 @@ mainloop = None
 adv = None
 ad_manager = None
 connected = 0
-app = None
-timeout = 0
 
 DBUS_PROPERTIES = "org.freedesktop.DBus.Properties"
 
@@ -58,50 +56,6 @@ class DummyApplication(Application):
     def __init__(self, bus):
         Application.__init__(self, bus)
         self.add_service(MovementService(bus, 0))
-        self.add_service(GPSService(bus, 1))
-
-class GPSService(Service):
-    """
-    Service that handles the GPS coordinate system
-    """
-    UUID = '0392fac1-9fd3-1023-a4e2-39109fa39aa2'
-
-    def __init__(self, bus, index):
-        Service.__init__(self, bus, index, self.UUID, True)
-        self.add_characteristic(GPSChrc(bus, 0, self))
-        self.waypoints = [None] * 128
-
-    @dbus.service.signal('tractorsquad.dummy.GPS')
-    def GPSSignal(self, value):
-        pass
-
-    def emitGPSSignal(self):
-        self.GPSSignal(self, self.waypoints)
-
-class GPSChrc(Characteristic):
-    """
-    Characteristic for GPS
-    """
-    UUID = '0102aaaa-3333-1111-abcd-0123456831fd'
-
-    def __init__(self, bus, index, service):
-        Characteristic.__init__(self, bus, index, self.UUID, ['write'], service)
-
-    def WriteValue(self, value, option):
-        print("Writing to GPS Chrc")
-        received = dbus_to_python(value)
-
-        index = (received[0] & 254) >> 1
-        lat = ((received[0] & 1) << 27) + (received[1] << 19) + (received[2] << 11) + (received[3] << 3) + ((received[4] & 224) >> 4)
-        lon = ((received[4] & 31) << 24) + (received[5] << 16) + ((received[6] << 8) + received[7])
-
-        lat /= 1000000
-        lon /= 1000000
-
-        print("Received: index =", index, "lat =", lat, "lon =", lon)
-
-        waypoints[index] = (lat, lon)
-        
 
 class MovementService(Service):
     """
@@ -112,7 +66,6 @@ class MovementService(Service):
     def __init__(self, bus, index):
         Service.__init__(self, bus, index, self.M_UUID, True)
         self.add_characteristic(MovementStateChrc(bus, 0, self))
-        self.enabled = 0
         self.mstate = 0
 
     @dbus.service.signal('tractorsquad.dummy.Movement')
@@ -134,29 +87,7 @@ class MovementStateChrc(Characteristic):
     def WriteValue(self, value, options):
         print("Writing to Movement State Chrc")
 
-        received = int.from_bytes(dbus_to_python(value), "big")
-        if received == 64:
-            # acknowledgement
-            print('Received', received)
-            timeout = 0
-        elif received == 38:
-            # &, turn on
-            print('Received', received, 'Turning on')
-            self.service.enabled = 1
-            self.service.mstate = 115
-            timeout = 0
-        elif received == 35:
-            # #, turn off
-            print('Received', received, 'Turning off')
-            self.service.enabled = 0
-            self.service.mstate = 115
-        elif self.service.enabled:
-            self.service.mstate = int.from_bytes(dbus_to_python(value), "big")
-            print('ENABLED -> Move State updated to', self.service.mstate)
-            timeout = 0
-        else:
-            print('Received', received, 'but not enabled')
-            self.service.mstate = 115
+        self.service.mstate = int.from_bytes(dbus_to_python(value), "big")
 
         print('Move State updated to', self.service.mstate)
         
@@ -241,27 +172,10 @@ def dbus_to_python(data):
         data = new_data
     return data
 
-def check():
-    print("checker")
-    if connected:
-        timeout += 1
-        if timeout == 11:
-            print("timeout")
-            app.services[0].mstate = 115
-            app.services[0].enabled = 0
-            app.services[0].emitMoveStateSignal()
-    else:
-        print("not connected")
-        app.services[0].mstate = 115
-        app.services[0].enabled = 0
-        app.services[0].emitMoveStateSignal()
-    return True
-
 def main():
     global mainloop
     global adv
     global ad_manager
-    global app
 
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
@@ -296,8 +210,6 @@ def main():
 
     app = DummyApplication(bus)
     service_manager.RegisterApplication(app.get_path(), {}, reply_handler=register_app_cb, error_handler=register_app_error_cb)
-
-    timer = GLib.timeout_add(1000, check)
 
     mainloop = GLib.MainLoop()
 
