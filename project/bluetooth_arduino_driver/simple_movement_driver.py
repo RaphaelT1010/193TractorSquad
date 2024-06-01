@@ -5,40 +5,70 @@ import time
 import dbus
 import dbus.mainloop.glib
 from gi.repository import GLib
+from motor import motor
 
 mainloop = None
 ser = None
+m = None
 
 def movement_signal_received(m_state):
-    global ser
-    command = None
+    global m
+    print(f"Signal received: {m_state}")
+
     if m_state == 117:
-        command = b'w\r\n'
+        print("Move forward signal received") 
+        m.drive_forward()
     elif m_state == 108:
-        command = b'a\r\n'
+        print("Turn left signal received")
+        m.turn_left()
     elif m_state == 114:
-        command = b'd\r\n'
+        print("Turn right signal received")
+        m.turn_right()
     elif m_state == 100:
-        command = b's\r\n'
+        print("Drive backwards signal received")
+        m.drive_backwards()
+    elif m_state == 115:
+        print("Stop signal received")
+        m.stop()
     elif m_state == 0:
-        ser.close()
+        print("Stop and exit signal received")
+        m.stop()
         mainloop.quit()
         return
     else:
+        print("Unknown signal received, stopping")
+        m.stop()
         return
-    ser.write(command)
 
 def main():
-
-    ser = serial.Serial('/dev/ttyUSB1/', 9600)
+    global ser
+    global m
+    global mainloop
+    
+    # Initialize the serial connection (uncomment if needed)
+    # ser = serial.Serial('/dev/ttyUSB1', 9600)
     time.sleep(2)
-
+    
+    # Initialize the motor
+    m = motor()
+    m.stop()
+    
+    # Setup D-Bus main loop
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-
+    print("In main")
+    
+    # Connect to the system bus
     bus = dbus.SystemBus()
-    bus.add_signal_receiver(movement_signal_received, dbus_interface='tractorsquad.dummy.Movement', signal_name='MoveStateSignal')
+    
+    # Add a signal receiver for movement signals
+    bus.add_signal_receiver(
+        movement_signal_received,
+        dbus_interface='tractorsquad.dummy.Movement',
+        signal_name='MoveStateSignal'
+    )
 
-    mainloop = Glib.MainLoop()
+    # Start the GLib main loop to listen for signals
+    mainloop = GLib.MainLoop()
     mainloop.run()
 
 if __name__ == '__main__':

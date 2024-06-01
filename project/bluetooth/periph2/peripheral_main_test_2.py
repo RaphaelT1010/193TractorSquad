@@ -26,6 +26,8 @@ from service import Service
 from service import Characteristic
 from service import Descriptor
 
+from motor import motor
+
 mainloop = None
 adv = None
 ad_manager = None
@@ -120,7 +122,6 @@ class MovementService(Service):
         pass
 
     def emitMoveStateSignal(self):
-        print("sending", self.mstate)
         self.MoveStateSignal(self.mstate)
 
 class MovementStateChrc(Characteristic):
@@ -131,6 +132,40 @@ class MovementStateChrc(Characteristic):
 
     def __init__(self, bus, index, service):
         Characteristic.__init__(self, bus, index, self.M_STATE_UUID, ['write'], service)
+        self.m = motor()
+        self.m.stop()
+
+    
+    def movement_signal_received(self, m_state):
+        
+        print(f"Signal received: {m_state}")
+
+        if m_state == 117:
+            print("Move forward signal received") 
+            self.m.drive_forward()
+        elif m_state == 108:
+            print("Turn left signal received")
+            self.m.turn_left()
+        elif m_state == 114:
+            print("Turn right signal received")
+            self.m.turn_right()
+        elif m_state == 100:
+            print("Drive backwards signal received")
+            self.m.drive_backwards()
+        elif m_state == 115:
+            print("Stop signal received")
+            self.m.stop()
+        elif m_state == 0:
+            print("Stop and exit signal received")
+            self.m.stop()
+            mainloop.quit()
+            return
+        else:
+            print("Unknown signal received, stopping")
+            self.m.stop()
+            return
+        self.m.stop()
+
 
     def WriteValue(self, value, options):
         print("Writing to Movement State Chrc")
@@ -162,7 +197,9 @@ class MovementStateChrc(Characteristic):
         print('Move State updated to', self.service.mstate)
         
         print('Emitting move state signal')
-        self.service.emitMoveStateSignal()
+        self.movement_signal_received(self.service.mstate)
+        self.movement_signal_received(115)
+        service.emitMoveStateSignal()
 
 def set_connected_status(status):
     global connected
@@ -243,20 +280,19 @@ def dbus_to_python(data):
     return data
 
 def check():
-    global timeout
-    global connected
     print("checker")
     if connected:
-        #timeout += 1
+        timeout += 1
         if timeout == 11:
             print("timeout")
             app.services[0].mstate = 115
             app.services[0].enabled = 0
+            app.services[0].emitMoveStateSignal()
     else:
         print("not connected")
         app.services[0].mstate = 115
         app.services[0].enabled = 0
-    app.services[0].emitMoveStateSignal()
+        app.services[0].emitMoveStateSignal()
     return True
 
 def main():
@@ -299,7 +335,7 @@ def main():
     app = DummyApplication(bus)
     service_manager.RegisterApplication(app.get_path(), {}, reply_handler=register_app_cb, error_handler=register_app_error_cb)
 
-    timer = GLib.timeout_add(4500, check)
+    timer = GLib.timeout_add(1000, check)
 
     mainloop = GLib.MainLoop()
 
