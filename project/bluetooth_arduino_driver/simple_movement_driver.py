@@ -16,29 +16,30 @@ def movement_signal_received(m_state):
     print(f"Signal received: {m_state}")
 
     if m_state == 117:
-        print("Move forward signal received") 
+        print("Move forward signal received\n") 
         m.drive_forward()
     elif m_state == 108:
-        print("Turn left signal received")
+        print("Turn left signal received\n")
         m.turn_left()
     elif m_state == 114:
-        print("Turn right signal received")
+        print("Turn right signal received\n")
         m.turn_right()
     elif m_state == 100:
-        print("Drive backwards signal received")
+        print("Drive backwards signal received\n")
         m.drive_backwards()
     elif m_state == 115:
-        print("Stop signal received")
+        print("Stop signal received\n")
         m.stop()
     elif m_state == 0:
-        print("Stop and exit signal received")
+        print("Stop and exit signal received\n")
         m.stop()
         mainloop.quit()
         return
     else:
-        print("Unknown signal received, stopping")
+        print("Unknown signal received, stopping\n")
         m.stop()
         return
+    m.stop()
 
 def main():
     global ser

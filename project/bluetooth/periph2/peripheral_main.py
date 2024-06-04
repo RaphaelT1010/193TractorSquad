@@ -69,14 +69,16 @@ class GPSService(Service):
     def __init__(self, bus, index):
         Service.__init__(self, bus, index, self.UUID, True)
         self.add_characteristic(GPSChrc(bus, 0, self))
-        self.waypoints = [None] * 128
+        self.waypoints = [0] * 256
 
     @dbus.service.signal('tractorsquad.dummy.GPS')
     def GPSSignal(self, value):
         pass
 
     def emitGPSSignal(self):
-        self.GPSSignal(self, self.waypoints)
+        print("sending GPS waypoints")
+        self.GPSSignal(self.waypoints)
+        print("success")
 
 class GPSChrc(Characteristic):
     """
@@ -92,16 +94,20 @@ class GPSChrc(Characteristic):
         received = dbus_to_python(value)
 
         index = (received[0] & 254) >> 1
-        lat = ((received[0] & 1) << 27) + (received[1] << 19) + (received[2] << 11) + (received[3] << 3) + ((received[4] & 224) >> 4)
-        lon = ((received[4] & 31) << 24) + (received[5] << 16) + ((received[6] << 8) + received[7])
+        lon = ((received[0] & 1) << 28) + (received[1] << 20) + (received[2] << 12) + (received[3] << 4) + (received[4] >> 4)
+        lat = ((received[4] & 15) << 24) + (received[5] << 16) + ((received[6] << 8) + received[7])
 
-        lat /= 1000000
-        lon /= 1000000
+        if lon & (1 << 28) != 0: # if lon is negative
+            lon |= -536870912
+        if lat & (1 << 27) != 0: # if lat is negative
+            lat |= -268435456
 
-        print("Received: index =", index, "lat =", lat, "lon =", lon)
+        print("Received: index =", index, "lon =", lon, "lat =", lat)
 
-        waypoints[index] = (lat, lon)
-        
+        self.service.waypoints[index * 2] = lon;
+        self.service.waypoints[index * 2 + 1] = lat;
+
+        self.service.emitGPSSignal();
 
 class MovementService(Service):
     """
@@ -115,7 +121,7 @@ class MovementService(Service):
         self.enabled = 0
         self.mstate = 0
 
-    @dbus.service.signal('tractorsquad.dummy.Movement')
+    @dbus.service.signal('tractorsquad.dummy.Movement', signature='i')
     def MoveStateSignal(self, mstate):
         pass
 
@@ -299,7 +305,7 @@ def main():
     app = DummyApplication(bus)
     service_manager.RegisterApplication(app.get_path(), {}, reply_handler=register_app_cb, error_handler=register_app_error_cb)
 
-    timer = GLib.timeout_add(4500, check)
+#    timer = GLib.timeout_add(4500, check)
 
     mainloop = GLib.MainLoop()
 
