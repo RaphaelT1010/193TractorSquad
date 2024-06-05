@@ -113,6 +113,8 @@ class GPS:
         else:
             print("Track angle data not available.")
 
+        return self.gps.track_angle_deg
+
     def get_horizontal_dilution(self):
         if not self.obtain_gps_fix():
             print("Could not obtain GPS fix.")
@@ -134,6 +136,6 @@ class GPS:
             print("Height geoid data not available.")
 
 # Example usage
-#gps_device = GPS()
-#gps_device.obtain_coords()
-#gps_device.obtain_satellites()
+gps_device = GPS()
+gps_device.obtain_coords()
+gps_device.obtain_satellites()

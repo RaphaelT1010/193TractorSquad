@@ -1,5 +1,6 @@
 from motor import motor
 import math
+import time
 from adafruit_ultimate_gps import GPS
 
 class gps_movement:
@@ -8,7 +9,8 @@ class gps_movement:
         # coords[0] = latitude, coords[1] = longitude  
         self.coords = coords     
         self.distance = 0
-        self.heading = 0
+        self.current_heading = 260
+        self.dest_heading = 320
         self.min_distance = 3 
         self.min_degrees = 10
         self.gps_device = GPS()
@@ -40,6 +42,34 @@ class gps_movement:
 
         return distance
 
+    def get_heading_move(self, coords1, coords2):
+        # Radius of the Earth in kilometers
+        R = 6371.0
+        currentLatitude = coords1[0]
+        currentLongitude = coords2[1]
+        # Convert latitude and longitude from degrees to radians
+        lat1_rad = math.radians(currentLatitude)
+        lon1_rad = math.radians(currentLongitude)
+        lat2_rad = math.radians(coords2[0])
+        lon2_rad = math.radians(coords2[1])
+
+        # Calculate the differences
+        dlon = lon2_rad - lon1_rad
+
+        # Calculate the heading using arctangent
+        x = math.sin(dlon) * math.cos(lat2_rad)
+        y = math.cos(lat1_rad) * math.sin(lat2_rad) - (math.sin(lat1_rad) * math.cos(lat2_rad) * math.cos(dlon))
+
+        initial_heading = math.atan2(x, y)
+
+        # Convert heading from radians to degrees
+        initial_heading = math.degrees(initial_heading)
+
+        # Normalize heading to be between 0 and 360 degrees
+        initial_heading = (initial_heading + 360) % 360
+        #self.dest_heading = initial_heading
+        return initial_heading
+
     def get_heading(self, currentCoords):
         # Radius of the Earth in kilometers
         R = 6371.0
@@ -65,16 +95,16 @@ class gps_movement:
 
         # Normalize heading to be between 0 and 360 degrees
         initial_heading = (initial_heading + 360) % 360
-        self.heading = initial_heading
+        #self.dest_heading = initial_heading
         return initial_heading
     
-    def get_adjusted_heading(self, currentHeading):
-        print(f"currentHeading: {currentHeading}") 
-        print(f"destHeading: {self.heading}") 
-        resultheading = self.heading - currentHeading
+    def get_adjusted_heading(self):
+        print(f"currentHeading: {self.current_heading}") 
+        print(f"destHeading: {self.dest_heading}") 
+        resultheading = self.dest_heading - self.current_heading
         adj_heading = 360 - abs(resultheading)
         
-        heading = 0
+        #heading = 0
         direction = ""
         if adj_heading < 180:
             heading = adj_heading
@@ -93,29 +123,64 @@ class gps_movement:
                 direction = "CW"
         return heading, direction
 
-         
-     
+    def start_sequence(self):
+        first_coords = self.gps_device.obtain_coords()
+        self.coords = first_coords
+        self.m.drive_forward()
+        
+	
+        time.sleep(10)
+        
+        self.m.stop()
+        second_coords = self.gps_device.obtain_coords()
+        initial_heading = self.get_heading(second_coords)
+	
+        print(f"INITIAL_HEADING {initial_heading}")
+        self.current_heading = initial_heading
+	
+ 
         
 
     def move_to_gps_coords_sequence(self):
         # make sure motors have stopped 
         self.m.stop()
-        # obtain current robot coordinates 
-        current_coords = self.gps_device.obtain_coords()
-        # determine distance from dest coords
-        distance = self.get_distance(current_coords)
-        # determine heading to travel
-        current_heading = self.get_heading(current_coords)
-        # determine which direction to rotate and how many degrees to rotate by
-        adj_heading, adj_direction = self.get_adjusted_heading(current_heading)
-        print(f"adjusted heading")
-        # rotate to correct general heading 
-        self.m.face_correct_heading(adj_heading, adj_direction)
+        coords = self.gps_device.obtain_coords()
+        distance = self.get_distance(coords)
+        print(f"Distance {distance}")
+        heading = self.get_heading(coords)
+        print(f"Heading {heading}")
+        required_rotation, direction = self.get_adjusted_heading()
+        print(f"required rotation {required_rotation}")
+        print(direction)
+        self.m.face_correct_heading(required_rotation, direction)     
+        self.m.drive_forward()
+	    
+        coords_1 = self.gps_device.obtain_coords()
+        self.m.drive_forward()
+        coords_2 = self.gps_device.obtain_coords()
+        print(coords_1)
+        print(coords_2)
+        current_heading_on_move = self.get_heading_move(coords_1, coords_2)
+        print(current_heading_on_move)
 
-        
-       # while distance > self.min_distance:
-         #   self.m.drive_forward()
-          #  self.m.movement_correction(current_heading, distance)
+        self.m.stop()  
+        '''
+        while distance > self.min_distance:
+            self.m.drive_forward()
+	    
+            coords_1 = self.gps_device.obtain_coords()
+            coords_2 = self.gps_device.obtain_coords()
+            current_heading_on_move = self.get_heading_move(coords_1, coords_2)
+            
+            self.current_heading = current_heading_on_move
+            print(current_heading_on_move)
+            current_coords_on_move = self.gps_device.obtain_coords()
+
+            distance = self.get_distance(current_coords_on_move)
+            adj_heading, adj_direction = self.get_adjusted_heading()
+
+            self.m.movement_correction(adj_heading, adj_direction)
+'''
 
 
 

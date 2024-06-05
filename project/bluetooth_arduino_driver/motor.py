@@ -115,7 +115,7 @@ class motor:
                         self.pivotCCW()
 
         self.stop()
-'''
+
     def movement_correction(self, adj_heading, adj_direction):
         if abs(adj_heading) < 10:
             return
@@ -127,4 +127,3 @@ class motor:
                     self.turn_right()
 
         self.drive_forward()
-'''

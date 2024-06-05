@@ -13,14 +13,19 @@ gps = None
 
 def gps_signal_received(waypoints):
     global gps
+
     print(waypoints[0], waypoints[1])
+    lat = waypoints[0]/1000000
+    long = waypoints[1]/1000000
+    gps.gps_movement([lat, log])
+    gps.move_to_gps_coords_sequence()
     
 
 def main():
     global mainloop
     global gps
 
-    gps = gps_movement()
+    #gps = gps_movement()
 
     # Setup D-Bus main loop
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
