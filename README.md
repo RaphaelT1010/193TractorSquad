@@ -10,7 +10,7 @@ which controls the robot and configuration for the mobile app which sends signal
 and use instructions and procedures.
 
 # Python Versions and Raspberry Pi Setup
-All Raspberry Pi code was developed in python. The versions of python that we used were: Python 3 and 2. As well, some libraries may have to be installed on the Raspberry Pi so that
+All Raspberry Pi code was developed in python. The versions of python that we used were: Python 3.7. As well, some libraries may have to be installed on the Raspberry Pi so that
 the code can use different APIs and functions. The original SD card on the Raspberry Pi should have everything setup, however. This includes correct python versions, all relevant python libaries,
 the peripheral name of the Raspberry Pi as seen on Bluetooth, SSH and VNC is enabled, and Bluetooth Low Energy is enabled. Regarding the peripheral name, we have named the Raspberry Pi as
 "tractorsquad" and on Bluetooth scanning, the Pi will appear with that name. The mobile app to control the robot will *only* detect Bluetooth peripherals with the name "tractorsquad" unless
@@ -68,7 +68,7 @@ speed when moving forward and backward. As well, these were calibrated so that t
 
 # Issues/Errors
 There can be a lot of issues and dependencies. To make sure you have the correct dependency versions, we suggest consulting the original SD card for its proper python libraries installed and python versions.
-If not found, the proper python versions are:
+If not found, the proper python versions are: 3.7
 
 Another thing to note, a lot of Raspberry Pi configuration was made to allow SSH/VNC and Bluetooth. If a new Pi is used, this will have to be reset again if the features are needed. Let us know if you have any other errors.
 
